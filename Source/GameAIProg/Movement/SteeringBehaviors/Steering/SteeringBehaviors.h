@@ -63,3 +63,61 @@ private :
 	float MaxSpeed{};
 
 };
+
+
+class Face : public ISteeringBehavior
+{
+public:
+	Face() = default;
+	virtual ~Face() override = default;
+
+
+	virtual SteeringOutput CalculateSteering(float DeltaT, ASteeringAgent& Agent) override;
+
+private:
+	float RotationSpeed{ 5.f };
+};
+
+class Pursuit : public ISteeringBehavior
+{
+public:
+	Pursuit() = default;
+	virtual ~Pursuit() override = default;
+
+
+	virtual SteeringOutput CalculateSteering(float DeltaT, ASteeringAgent& Agent) override;
+
+private:
+	float RotationSpeed{ 5.f };
+};
+
+class Evade : public ISteeringBehavior
+{
+public:
+	Evade() = default;
+	virtual ~Evade() override = default;
+
+
+	virtual SteeringOutput CalculateSteering(float DeltaT, ASteeringAgent& Agent) override;
+
+private:
+	float RotationSpeed{ 1.f };
+};
+
+class Wander : public Seek
+{
+public:
+	Wander() = default;
+	virtual ~Wander() override = default;
+
+
+	virtual SteeringOutput CalculateSteering(float DeltaT, ASteeringAgent& Agent) override;
+
+private:
+
+	float Offset{ 150.f };
+	float Radius { 80.f };
+	float MaxAngleChange{ 0.4f };
+	float WanderAngle = { 0.f };
+};
+
