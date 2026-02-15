@@ -25,7 +25,7 @@ void ALevel_SteeringBehaviors::BeginPlay()
 
 void ALevel_SteeringBehaviors::BeginDestroy()
 {
-	Super::BeginDestroy();
+	Super::BeginDestroy(); 
 }
 
 // Called every frame
@@ -223,13 +223,24 @@ void ALevel_SteeringBehaviors::SetAgentBehavior(ImGui_Agent& Agent)
 {
 	Agent.Behavior.reset();
 	
-	switch (static_cast<BehaviorTypes>(Agent.SelectedBehavior))
+	 switch (static_cast<BehaviorTypes>(Agent.SelectedBehavior))
 	{
+	 case BehaviorTypes::Seek:
+		 Agent.Behavior = std::make_unique<Seek>();
+		 break;
+
+	 case BehaviorTypes::Flee:
+		 Agent.Behavior = std::make_unique<Flee>();
+		 break;
+
+	 case BehaviorTypes::Arrive:
+		 Agent.Behavior = std::make_unique<Arrive>(*Agent.Agent);
+		 break;
 	//TODO; Implement behaviors setting here
 	default:
 		assert(false); // Incorrect Agent Behavior gotten during SetAgentBehavior()	
 	}
-
+	 
 	UpdateTarget(Agent);
 	
 	Agent.Agent->SetSteeringBehavior(Agent.Behavior.get());
