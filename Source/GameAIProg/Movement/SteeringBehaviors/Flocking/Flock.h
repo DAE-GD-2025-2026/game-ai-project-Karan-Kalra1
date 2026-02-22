@@ -47,7 +47,13 @@ public:
 private:
 	// For debug rendering purposes
 	UWorld* pWorld{nullptr};
-	
+
+	Cohesion* pCohesion = nullptr;
+Separation* pSeparation = nullptr;
+VelocityMatch* pVelocityMatch = nullptr;
+Wander* pWander = nullptr;
+Seek* pSeek = nullptr;
+
 	int FlockSize{0};
 	TArray<ASteeringAgent*> Agents{};
 #ifdef GAMEAI_USE_SPACE_PARTITIONING

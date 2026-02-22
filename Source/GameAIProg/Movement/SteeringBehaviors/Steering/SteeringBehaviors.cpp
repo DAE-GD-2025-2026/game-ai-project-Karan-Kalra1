@@ -235,6 +235,15 @@ SteeringOutput Pursuit::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 	return Steering;
 }
 
+Evade::Evade(ASteeringAgent* Agent)
+{
+	Target.Position = Agent->GetPosition();
+	Target.Orientation = Agent->GetRotation();
+	Target.LinearVelocity = Agent->GetLinearVelocity();
+	Target.AngularVelocity = Agent->GetAngularVelocity();
+
+}
+
 SteeringOutput Evade::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 {
 	SteeringOutput Steering{};
@@ -283,6 +292,8 @@ SteeringOutput Evade::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 		);
 
 	}
+
+
 
 	return Steering;
 }

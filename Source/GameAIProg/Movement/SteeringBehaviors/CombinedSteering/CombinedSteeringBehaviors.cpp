@@ -3,52 +3,72 @@
 #include <algorithm>
 #include "../SteeringAgent.h"
 
-BlendedSteering::BlendedSteering(const std::vector<WeightedBehavior>& WeightedBehaviors)
-	:WeightedBehaviors(WeightedBehaviors)
-{};
+// =======================
+// BLENDED STEERING
+// =======================
 
-//****************
-//BLENDED STEERING
+BlendedSteering::BlendedSteering(const std::vector<WeightedBehavior>& WeightedBehaviors)
+    : WeightedBehaviors(WeightedBehaviors)
+{
+}
+
 SteeringOutput BlendedSteering::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 {
-	SteeringOutput BlendedSteering = {};
-	// TODO: Calculate the weighted average steeringbehavior
-	
-	// TODO: Add debug drawing
+    SteeringOutput result{};
 
-	return BlendedSteering;
+    FVector2D totalLinear = FVector2D::ZeroVector;
+    float totalAngular = 0.f;
+
+    for (const WeightedBehavior& wb : WeightedBehaviors)
+    {
+        if (!wb.pBehavior) continue;
+
+        SteeringOutput steering = wb.pBehavior->CalculateSteering(DeltaT, Agent);
+
+        if (!steering.IsValid) continue;
+
+        totalLinear += steering.LinearVelocity * wb.Weight;
+        totalAngular += steering.AngularVelocity * wb.Weight;
+    }
+
+    result.LinearVelocity = totalLinear;
+    result.AngularVelocity = totalAngular;
+    result.IsValid = true;
+
+    return result;
 }
 
 float* BlendedSteering::GetWeight(ISteeringBehavior* const SteeringBehavior)
 {
-	auto it = find_if(WeightedBehaviors.begin(),
-		WeightedBehaviors.end(),
-		[SteeringBehavior](const WeightedBehavior& Elem)
-		{
-			return Elem.pBehavior == SteeringBehavior;
-		}
-	);
+    auto it = std::find_if(
+        WeightedBehaviors.begin(),
+        WeightedBehaviors.end(),
+        [SteeringBehavior](const WeightedBehavior& Elem)
+        {
+            return Elem.pBehavior == SteeringBehavior;
+        });
 
-	if(it!= WeightedBehaviors.end())
-		return &it->Weight;
-	
-	return nullptr;
+    if (it != WeightedBehaviors.end())
+        return &it->Weight;
+
+    return nullptr;
 }
 
-//*****************
-//PRIORITY STEERING
+// =======================
+// PRIORITY STEERING
+// =======================
+
 SteeringOutput PrioritySteering::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 {
-	SteeringOutput Steering = {};
+    SteeringOutput Steering{};
 
-	for (ISteeringBehavior* const pBehavior : m_PriorityBehaviors)
-	{
-		Steering = pBehavior->CalculateSteering(DeltaT, Agent);
+    for (ISteeringBehavior* const pBehavior : m_PriorityBehaviors)
+    {
+        Steering = pBehavior->CalculateSteering(DeltaT, Agent);
 
-		if (Steering.IsValid)
-			break;
-	}
+        if (Steering.IsValid)
+            return Steering;
+    }
 
-	//If non of the behavior return a valid output, last behavior is returned
-	return Steering;
+    return Steering;
 }

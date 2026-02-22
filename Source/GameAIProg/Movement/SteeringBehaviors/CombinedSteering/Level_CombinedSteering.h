@@ -32,5 +32,16 @@ private:
 	bool UseMouseTarget = false;
 	bool CanDebugRender = false;
 
+	Seek* pSeek = nullptr;
+	Wander* pWander = nullptr;
+	Evade* pEvade = nullptr;
+
+	ASteeringAgent* pAgent = nullptr;
+	ASteeringAgent* pWanderer = nullptr;
+
+
+	BlendedSteering* pBlended = nullptr;
+	PrioritySteering* pPriority = nullptr;
+
 	
 };

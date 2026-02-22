@@ -95,6 +95,7 @@ class Evade : public ISteeringBehavior
 {
 public:
 	Evade() = default;
+	Evade(ASteeringAgent* Agent);
 	virtual ~Evade() override = default;
 
 

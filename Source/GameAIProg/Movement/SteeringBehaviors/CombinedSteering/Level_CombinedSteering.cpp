@@ -13,21 +13,64 @@ ALevel_CombinedSteering::ALevel_CombinedSteering()
 // Called when the game starts or when spawned
 void ALevel_CombinedSteering::BeginPlay()
 {
-	Super::BeginPlay();
+		Super::BeginPlay();
+
+		// Main agent
+		pAgent = GetWorld()->SpawnActor<ASteeringAgent>();
+
+		// Wanderer agent (to evade)
+		pWanderer = GetWorld()->SpawnActor<ASteeringAgent>();
+
+		// Behaviors
+		pSeek = new Seek();
+		pWander = new Wander();
+		pEvade = new Evade();
+
+		// Wanderer only wanders
+		pWanderer->SetSteeringBehavior(pWander);
+
+		// Blended (Seek + Wander)
+		std::vector<BlendedSteering::WeightedBehavior> behaviors
+		{
+			{pSeek, 0.5f},
+			{pWander, 0.5f}
+		};
+
+		pBlended = new BlendedSteering(behaviors);
+
+		// Priority: Evade overrides Blended
+		std::vector<ISteeringBehavior*> priorityBehaviors
+		{
+			pEvade,
+			pWander
+		};
+
+		pPriority = new PrioritySteering(priorityBehaviors);
+
+		pAgent->SetSteeringBehavior(pPriority);
+	
 
 }
 
 void ALevel_CombinedSteering::BeginDestroy()
 {
-	Super::BeginDestroy();
+	
+	
+		delete pPriority;
+		delete pBlended;
+		delete pSeek;
+		delete pWander;
+		delete pEvade;
 
+		Super::BeginDestroy();
+	
 }
 
 // Called every frame
 void ALevel_CombinedSteering::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
 #pragma region UI
 	//UI
 	{
@@ -68,7 +111,11 @@ void ALevel_CombinedSteering::Tick(float DeltaTime)
 		if (ImGui::Checkbox("Debug Rendering", &CanDebugRender))
 		{
    // TODO: Handle the debug rendering of your agents here :)
+			pAgent->SetDebugRenderingEnabled(CanDebugRender);
+			pWanderer->SetDebugRenderingEnabled(CanDebugRender);
 		}
+		
+
 		ImGui::Checkbox("Trim World", &TrimWorld->bShouldTrimWorld);
 		if (TrimWorld->bShouldTrimWorld)
 		{
@@ -85,20 +132,36 @@ void ALevel_CombinedSteering::Tick(float DeltaTime)
 		ImGui::Spacing();
 
 
-		// ImGuiHelpers::ImGuiSliderFloatWithSetter("Seek",
-		// 	pBlendedSteering->GetWeightedBehaviorsRef()[0].Weight, 0.f, 1.f,
-		// 	[this](float InVal) { pBlendedSteering->GetWeightedBehaviorsRef()[0].Weight = InVal; }, "%.2f");
+		 ImGuiHelpers::ImGuiSliderFloatWithSetter("Seek",
+			 pBlended->GetWeightedBehaviorsRef()[0].Weight, 0.f, 1.f,
+		 	[this](float InVal) { pBlended->GetWeightedBehaviorsRef()[0].Weight = InVal; }, "%.2f");
 		//
-		// ImGuiHelpers::ImGuiSliderFloatWithSetter("Wander",
-		// pBlendedSteering->GetWeightedBehaviorsRef()[1].Weight, 0.f, 1.f,
-		// [this](float InVal) { pBlendedSteering->GetWeightedBehaviorsRef()[1].Weight = InVal; }, "%.2f");
+		 ImGuiHelpers::ImGuiSliderFloatWithSetter("Wander",
+		 pBlended->GetWeightedBehaviorsRef()[1].Weight, 0.f, 1.f,
+		 [this](float InVal) { pBlended->GetWeightedBehaviorsRef()[1].Weight = InVal; }, "%.2f");
 	
 		//End
 		ImGui::End();
+
 	}
 #pragma endregion
 	
 	// Combined Steering Update
  // TODO: implement handling mouse click input for seek
+			
+			pSeek->SetTarget(MouseTarget);
+			
+			
+	
+ // 
  // TODO: implement Make sure to also evade the wanderer
+
+			FTargetData Target;
+			Target.Position = pWanderer->GetPosition();
+			Target.Orientation = pWanderer->GetRotation();
+			Target.LinearVelocity = pWanderer->GetLinearVelocity();
+			Target.AngularVelocity = pWanderer->GetAngularVelocity();
+
+			pEvade->SetTarget(Target);
+
 }
