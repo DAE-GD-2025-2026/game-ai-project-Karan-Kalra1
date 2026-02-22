@@ -244,29 +244,41 @@ Evade::Evade(ASteeringAgent* Agent)
 
 }
 
+void Evade::SetEvadeDistance(float distance)
+{
+	_EvadeDistance = distance;
+}
+
 SteeringOutput Evade::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 {
 	SteeringOutput Steering{};
 
-	FVector2D toTarget = Target.Position - Agent.GetPosition();
+	Steering.IsValid = true;
 
-	float distance = toTarget.Length();
-	float speed = Agent.GetMaxLinearSpeed();
+		FVector2D toTarget = Target.Position - Agent.GetPosition();
 
-	float predictionTime = (speed > 0.1f)
-		? distance / speed
-		: 0.f;
+		float distance = toTarget.Length();
+		float speed = Agent.GetMaxLinearSpeed();
 
-	FVector2D predictedPosition =
-		Target.Position + Target.LinearVelocity * predictionTime;
+		if (distance > _EvadeDistance && _EvadeDistance > 0)
+		{
+			Steering.IsValid = false;
+		}
 
-	FVector2D desired =
-		(Agent.GetPosition() - predictedPosition).GetSafeNormal();
+		float predictionTime = (speed > 0.1f)
+			? distance / speed
+			: 0.f;
 
-	Steering.LinearVelocity = desired;
+		FVector2D predictedPosition =
+			Target.Position + Target.LinearVelocity * predictionTime;
 
+		FVector2D desired =
+			(Agent.GetPosition() - predictedPosition).GetSafeNormal();
 
-	if (Agent.GetDebugRenderingEnabled())
+		Steering.LinearVelocity = desired;
+	
+
+	if (Agent.GetDebugRenderingEnabled() && Steering.IsValid)
 	{
 		DrawDebugLine(Agent.GetWorld(),
 			FVector(-Target.Position, 0),
@@ -289,6 +301,21 @@ SteeringOutput Evade::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 			0,
 			2.f
 
+		);
+
+		DrawDebugCircle(
+			Agent.GetWorld(),
+			FVector(Agent.GetPosition(), 0),
+			_EvadeDistance,
+			32,
+			FColor::Red,
+			false,
+			-1.f,
+			0,
+			2.f,
+			FVector(1, 0, 0),   // X axis
+			FVector(0, 1, 0),   // Y axis
+			false
 		);
 
 	}

@@ -16,18 +16,17 @@ void ALevel_CombinedSteering::BeginPlay()
 		Super::BeginPlay();
 
 		// Main agent
-		pAgent = GetWorld()->SpawnActor<ASteeringAgent>();
+		pAgent = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass, FVector{ 0,0,90 }, FRotator::ZeroRotator);
 
 		// Wanderer agent (to evade)
-		pWanderer = GetWorld()->SpawnActor<ASteeringAgent>();
+		pWanderer = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass, FVector{ 200,200,90 }, FRotator::ZeroRotator);
 
 		// Behaviors
 		pSeek = new Seek();
 		pWander = new Wander();
 		pEvade = new Evade();
-
-		// Wanderer only wanders
-		pWanderer->SetSteeringBehavior(pWander);
+		pEvade->SetEvadeDistance(200.f);
+		
 
 		// Blended (Seek + Wander)
 		std::vector<BlendedSteering::WeightedBehavior> behaviors
@@ -46,6 +45,9 @@ void ALevel_CombinedSteering::BeginPlay()
 		};
 
 		pPriority = new PrioritySteering(priorityBehaviors);
+
+		// Wanderer only wanders
+		pWanderer->SetSteeringBehavior(pBlended);
 
 		pAgent->SetSteeringBehavior(pPriority);
 	

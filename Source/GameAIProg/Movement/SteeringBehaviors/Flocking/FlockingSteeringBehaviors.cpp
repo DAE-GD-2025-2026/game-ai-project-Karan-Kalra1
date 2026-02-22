@@ -12,11 +12,6 @@ SteeringOutput Cohesion::CalculateSteering(float deltaT, ASteeringAgent& pAgent)
 
     FVector2D avgPos = pFlock->GetAverageNeighborPos();
 
-    if (avgPos.IsNearlyZero())
-    {
-        result.IsValid = false;
-        return result;
-    }
 
     SetTarget(FSteeringParams(avgPos));
 

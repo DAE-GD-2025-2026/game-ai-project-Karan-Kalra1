@@ -30,7 +30,7 @@ protected:
 private:
 	//Datamembers
 	bool UseMouseTarget = false;
-	bool CanDebugRender = false;
+	bool CanDebugRender = true;
 
 	Seek* pSeek = nullptr;
 	Wander* pWander = nullptr;

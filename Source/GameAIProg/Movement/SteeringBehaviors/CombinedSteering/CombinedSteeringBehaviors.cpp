@@ -66,6 +66,7 @@ SteeringOutput PrioritySteering::CalculateSteering(float DeltaT, ASteeringAgent&
     {
         Steering = pBehavior->CalculateSteering(DeltaT, Agent);
 
+
         if (Steering.IsValid)
             return Steering;
     }

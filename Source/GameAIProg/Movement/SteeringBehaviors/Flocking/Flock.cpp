@@ -25,12 +25,20 @@ Flock::Flock(
 		FVector spawnPos = FVector(
 			FMath::RandRange(-WorldSize, WorldSize),
 			FMath::RandRange(-WorldSize, WorldSize),
-			0.f);
+			90.f);
 
 		ASteeringAgent* agent =
 			pWorld->SpawnActor<ASteeringAgent>(AgentClass, spawnPos, FRotator::ZeroRotator);
 
+		if (!agent)
+		{
+			i--;
+			continue;
+		}
+
 		Agents[i] = agent;
+
+		
 	}
 
 	pCohesion = new Cohesion(this);
@@ -41,9 +49,9 @@ Flock::Flock(
 
 	std::vector<BlendedSteering::WeightedBehavior> behaviors =
 	{
-		{pSeek, 0.5f},
+		//{pSeek, 0.1f},
 		{ pCohesion, 0.3f },
-		{ pSeparation, 0.8f },
+		{ pSeparation, 2.0f },
 		{ pVelocityMatch, 0.5f },
 		{ pWander, 0.2f }
 	};
@@ -65,6 +73,8 @@ Flock::Flock(
 
 	for (ASteeringAgent* agent : Agents)
 	{
+		
+
 		if (pPrioritySteering)
 			agent->SetSteeringBehavior(pPrioritySteering.get());
 		else
@@ -79,13 +89,16 @@ Flock::~Flock()
 	delete pSeek;
 	delete pVelocityMatch;
 	delete pWander;
-	delete pSeek;
+	delete pSeparation;
+
 }
 
 void Flock::Tick(float DeltaTime)
 {
 	for (ASteeringAgent* agent : Agents)
 	{
+		
+
 		RegisterNeighbors(agent);
 		agent->Tick(DeltaTime);
 	}
@@ -95,7 +108,8 @@ void Flock::RenderDebug()
 {
  for (ASteeringAgent* agent : Agents)
 {
-	 agent->SetDebugRenderingEnabled(true);
+	
+	 agent->SetDebugRenderingEnabled(DebugRenderSteering);
 }
 
 if (DebugRenderNeighborhood)
@@ -217,6 +231,8 @@ void Flock::RegisterNeighbors(ASteeringAgent* const pAgent)
 
 	for (ASteeringAgent* other : Agents)
 	{
+		
+
 		if (other == pAgent)
 			continue;
 

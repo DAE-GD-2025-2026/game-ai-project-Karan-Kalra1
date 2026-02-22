@@ -88,7 +88,7 @@ public:
 	virtual SteeringOutput CalculateSteering(float DeltaT, ASteeringAgent& Agent) override;
 
 private:
-	float RotationSpeed{ 5.f };
+
 };
 
 class Evade : public ISteeringBehavior
@@ -98,11 +98,11 @@ public:
 	Evade(ASteeringAgent* Agent);
 	virtual ~Evade() override = default;
 
-
+	virtual void SetEvadeDistance(float distance);
 	virtual SteeringOutput CalculateSteering(float DeltaT, ASteeringAgent& Agent) override;
 
 private:
-	float RotationSpeed{ 1.f };
+	float _EvadeDistance = 0.f;
 };
 
 class Wander : public Seek
