@@ -12,6 +12,7 @@ SteeringOutput Seek::CalculateSteering(float DeltaT, ASteeringAgent & Agent)
 
 	Steering.LinearVelocity = Target.Position - Agent.GetPosition();
 	
+	Steering.LinearVelocity.Normalize();
 
 	//Add debug Rendering for grades
 
@@ -59,6 +60,8 @@ SteeringOutput Flee::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 		);
 	}
 
+	Steering.LinearVelocity.Normalize();
+
 	return Steering;
 
 
@@ -104,6 +107,7 @@ SteeringOutput Arrive::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 
 	Steering.LinearVelocity = desiredVelocity - Agent.GetLinearVelocity();
 
+	Steering.LinearVelocity.Normalize();
 
 	if (Agent.GetDebugRenderingEnabled())
 	{

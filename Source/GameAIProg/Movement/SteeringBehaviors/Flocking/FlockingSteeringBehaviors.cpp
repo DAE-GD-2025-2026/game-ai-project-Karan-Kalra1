@@ -40,6 +40,9 @@ SteeringOutput Separation::CalculateSteering(float deltaT, ASteeringAgent& pAgen
     }
 
     result.LinearVelocity = steering;
+
+    result.LinearVelocity.Normalize();
+
     return result;
 }
 
@@ -52,12 +55,7 @@ SteeringOutput VelocityMatch::CalculateSteering(float deltaT, ASteeringAgent& pA
 
     FVector2D avgVelocity = pFlock->GetAverageNeighborVelocity();
 
-    if (avgVelocity.IsNearlyZero())
-    {
-        result.IsValid = false;
-        return result;
-    }
-
     result.LinearVelocity = avgVelocity.GetSafeNormal();
+
     return result;
 }

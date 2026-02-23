@@ -36,6 +36,8 @@ Flock::Flock(
 			continue;
 		}
 
+		agent->SetActorTickEnabled(false);
+
 		Agents[i] = agent;
 
 		
@@ -49,9 +51,9 @@ Flock::Flock(
 
 	std::vector<BlendedSteering::WeightedBehavior> behaviors =
 	{
-		//{pSeek, 0.1f},
+		{pSeek, 0.1f},
 		{ pCohesion, 0.3f },
-		{ pSeparation, 2.0f },
+		{ pSeparation, 0.34f },
 		{ pVelocityMatch, 0.5f },
 		{ pWander, 0.2f }
 	};
@@ -96,8 +98,7 @@ Flock::~Flock()
 void Flock::Tick(float DeltaTime)
 {
 	for (ASteeringAgent* agent : Agents)
-	{
-		
+	{	
 
 		RegisterNeighbors(agent);
 		agent->Tick(DeltaTime);
@@ -107,10 +108,9 @@ void Flock::Tick(float DeltaTime)
 void Flock::RenderDebug()
 {
  for (ASteeringAgent* agent : Agents)
-{
-	
+	{
 	 agent->SetDebugRenderingEnabled(DebugRenderSteering);
-}
+	}
 
 if (DebugRenderNeighborhood)
     RenderNeighborhood();
@@ -176,10 +176,11 @@ void Flock::ImGuiRender(ImVec2 const& WindowPos, ImVec2 const& WindowSize)
 
 				switch (i)
 				{
-				case 0: label = "Cohesion"; break;
-				case 1: label = "Separation"; break;
-				case 2: label = "Alignment"; break;
-				case 3: label = "Wander"; break;
+				case 0: label = "Seek"; break;
+				case 1: label = "Cohesion"; break;
+				case 2: label = "Separation"; break;
+				case 3: label = "Alignment"; break;
+				case 4: label = "Wander"; break;
 				default: label = "Behavior"; break;
 				}
 
