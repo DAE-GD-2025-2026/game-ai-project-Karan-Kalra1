@@ -7,6 +7,8 @@
 
 SteeringOutput Seek::CalculateSteering(float DeltaT, ASteeringAgent & Agent)
 {
+	Agent.SetIsAutoOrienting(true);
+
 	SteeringOutput Steering{};
 
 
@@ -38,6 +40,7 @@ SteeringOutput Seek::CalculateSteering(float DeltaT, ASteeringAgent & Agent)
 
 SteeringOutput Flee::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 {
+	Agent.SetIsAutoOrienting(true);
 
 	SteeringOutput Steering{};
 
@@ -75,6 +78,7 @@ Arrive::Arrive(ASteeringAgent& Agent)
 
 SteeringOutput Arrive::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 {
+	Agent.SetIsAutoOrienting(true);
 
 	SteeringOutput Steering{};
 
@@ -165,15 +169,16 @@ SteeringOutput Arrive::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 
 SteeringOutput Face::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 {
+	Agent.SetIsAutoOrienting(false);
+
 	SteeringOutput Steering{};
 
 	FVector2D direction = Target.Position - Agent.GetPosition();
 
-	if (direction.IsNearlyZero())
-		return Steering;
 
 	float targetAngle = FMath::Atan2(direction.Y, direction.X);
-	float currentAngle = Agent.GetRotation();
+
+	float currentAngle = FMath::DegreesToRadians(Agent.GetRotation());
 
 	float angleDifference =
 		FMath::FindDeltaAngleRadians(currentAngle, targetAngle);
@@ -188,6 +193,8 @@ SteeringOutput Face::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 
 SteeringOutput Pursuit::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 {
+	Agent.SetIsAutoOrienting(true);
+
 	SteeringOutput Steering{};
 
 	FVector2D toTarget = Target.Position - Agent.GetPosition();
@@ -241,6 +248,7 @@ SteeringOutput Pursuit::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 
 Evade::Evade(ASteeringAgent* Agent)
 {
+
 	Target.Position = Agent->GetPosition();
 	Target.Orientation = Agent->GetRotation();
 	Target.LinearVelocity = Agent->GetLinearVelocity();
@@ -255,6 +263,8 @@ void Evade::SetEvadeDistance(float distance)
 
 SteeringOutput Evade::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 {
+	Agent.SetIsAutoOrienting(true);
+
 	SteeringOutput Steering{};
 
 	Steering.IsValid = true;
@@ -331,6 +341,8 @@ SteeringOutput Evade::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 
 SteeringOutput Wander::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 {
+	Agent.SetIsAutoOrienting(true);
+
 	// random angle offset
 	WanderAngle += FMath::RandRange(-MaxAngleChange, MaxAngleChange);
 

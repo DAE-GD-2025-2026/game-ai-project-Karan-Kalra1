@@ -75,7 +75,7 @@ public:
 	virtual SteeringOutput CalculateSteering(float DeltaT, ASteeringAgent& Agent) override;
 
 private:
-	float RotationSpeed{ 5.f };
+	float RotationSpeed{ 100.f };
 };
 
 class Pursuit : public ISteeringBehavior
