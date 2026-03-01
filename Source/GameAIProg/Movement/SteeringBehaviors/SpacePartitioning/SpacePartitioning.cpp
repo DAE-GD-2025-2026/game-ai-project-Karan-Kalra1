@@ -42,26 +42,75 @@ CellSpace::CellSpace(UWorld* pWorld, float Width, float Height, int Rows, int Co
 	CellWidth = Width / Cols;
 	CellHeight = Height / Rows;
 
-	// TODO create the cells
+	// Create all cells
+	Cells.reserve(NrOfRows * NrOfCols);
+
+	float startX = -SpaceWidth * 0.5f;
+	float startY = -SpaceHeight * 0.5f;
+
+	for (int row = 0; row < NrOfRows; ++row)
+	{
+		for (int col = 0; col < NrOfCols; ++col)
+		{
+			float left = startX + col * CellWidth;
+			float bottom = startY + row * CellHeight;
+
+			Cells.emplace_back(left, bottom, CellWidth, CellHeight);
+		}
+	}
 }
 
 void CellSpace::AddAgent(ASteeringAgent& Agent)
 {
-	// TODO Add the agent to the correct cell
+	
+		int index = PositionToIndex(Agent.GetPosition());
+		Cells[index].Agents.push_back(&Agent);
+	
 }
 
 void CellSpace::UpdateAgentCell(ASteeringAgent& Agent, const FVector2D& OldPos)
 {
-	//TODO Check if the agent needs to be moved to another cell.
-	//TODO Use the calculated index for oldPos and currentPos for this
+	
+		int oldIndex = PositionToIndex(OldPos);
+		int newIndex = PositionToIndex(Agent.GetPosition());
+
+		if (oldIndex != newIndex)
+		{
+			Cells[oldIndex].Agents.remove(&Agent);
+			Cells[newIndex].Agents.push_back(&Agent);
+		}
+	
 }
 
 void CellSpace::RegisterNeighbors(ASteeringAgent& Agent, float QueryRadius)
 {
-	// TODO Register the neighbors for the provided agent
-	// TODO Only check the cells that are within the radius of the neighborhood
-}
+	NrOfNeighbors = 0;
 
+	FVector2D pos = Agent.GetPosition();
+	FRect queryRect;
+	queryRect.Min = pos - FVector2D(QueryRadius, QueryRadius);
+	queryRect.Max = pos + FVector2D(QueryRadius, QueryRadius);
+
+	for (Cell& cell : Cells)
+	{
+		if (!DoRectsOverlap(cell.BoundingBox, queryRect))
+			continue;
+
+		for (ASteeringAgent* other : cell.Agents)
+		{
+			if (&Agent == other)
+				continue;
+
+			float distSq =
+				(Agent.GetPosition() - other->GetPosition()).SizeSquared();
+
+			if (distSq < QueryRadius * QueryRadius)
+			{
+				Neighbors[NrOfNeighbors++] = other;
+			}
+		}
+	}
+}
 void CellSpace::EmptyCells()
 {
 	for (Cell& c : Cells)
@@ -70,13 +119,37 @@ void CellSpace::EmptyCells()
 
 void CellSpace::RenderCells() const
 {
-	// TODO Render the cells with the number of agents inside of it
+	for (const Cell& cell : Cells)
+	{
+		auto points = cell.GetRectPoints();
+
+		for (int i = 0; i < 4; ++i)
+		{
+			DrawDebugLine(
+				pWorld,
+				FVector(points[i], 0),
+				FVector(points[(i + 1) % 4], 0),
+				FColor::Green,
+				false,
+				-1.f,
+				0,
+				1.f
+			);
+		}
+	}
 }
 
 int CellSpace::PositionToIndex(FVector2D const & Pos) const
 {
-	// TODO Calculate the index of the cell based on the position
-	return 0;
+	
+	int col = (Pos.X + SpaceWidth * 0.5f) / CellWidth;
+	int row = (Pos.Y + SpaceHeight * 0.5f) / CellHeight;
+
+	col = FMath::Clamp(col, 0, NrOfCols - 1);
+	row = FMath::Clamp(row, 0, NrOfRows - 1);
+
+	return row * NrOfCols + col;
+	
 }
 
 bool CellSpace::DoRectsOverlap(FRect const & RectA, FRect const & RectB)
