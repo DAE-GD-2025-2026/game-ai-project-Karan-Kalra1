@@ -47,7 +47,7 @@ UCLASS()
 class GAMEAIPROG_API ASteeringAgent : public ABaseAgent
 {
 	GENERATED_BODY()
-
+	UMaterialInstanceDynamic* DebugMID = nullptr;
 public:
 	// Sets default values for this character's properties
 	ASteeringAgent();
@@ -70,4 +70,5 @@ public:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 	void SetSteeringBehavior(ISteeringBehavior* NewSteeringBehavior);
+	void SetDebugColor(const FLinearColor& Color);
 };

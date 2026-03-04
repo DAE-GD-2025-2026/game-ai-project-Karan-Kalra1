@@ -10,6 +10,13 @@ SteeringOutput Cohesion::CalculateSteering(float deltaT, ASteeringAgent& pAgent)
 {
     SteeringOutput result{};
 
+
+
+    if (pFlock->GetNrOfNeighbors() == 0)
+    {
+        return result;
+    }
+
     FVector2D avgPos = pFlock->GetAverageNeighborPos();
 
 
@@ -28,19 +35,19 @@ SteeringOutput Separation::CalculateSteering(float deltaT, ASteeringAgent& pAgen
     const TArray<ASteeringAgent*>& neighbors = pFlock->GetNeighbors();
     int count = pFlock->GetNrOfNeighbors();
 
+    const float eps = 1e-4f;
+
     for (int i = 0; i < count; ++i)
     {
         FVector2D toAgent =
             pAgent.GetPosition() - neighbors[i]->GetPosition();
 
-        float distSq = toAgent.SquaredLength ();
+        const float distSq = FMath::Max(toAgent.SquaredLength(), eps);
 
             steering += toAgent / distSq;
     }
 
-    result.LinearVelocity = steering;
-
-    result.LinearVelocity.Normalize();
+    result.LinearVelocity = steering.GetSafeNormal();
 
     return result;
 }
@@ -51,6 +58,11 @@ SteeringOutput Separation::CalculateSteering(float deltaT, ASteeringAgent& pAgen
 SteeringOutput VelocityMatch::CalculateSteering(float deltaT, ASteeringAgent& pAgent)
 {
     SteeringOutput result{};
+
+    if (pFlock->GetNrOfNeighbors() == 0)
+    {
+        return result;
+    }
 
     FVector2D avgVelocity = pFlock->GetAverageNeighborVelocity();
 

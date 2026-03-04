@@ -9,6 +9,7 @@ ALevel_Flocking::ALevel_Flocking()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
 }
 
 // Called when the game starts or when spawned
@@ -16,8 +17,16 @@ void ALevel_Flocking::BeginPlay()
 {
 	Super::BeginPlay();
 
-	TrimWorld->SetTrimWorldSize(2000.f);
+	TrimWorld->SetTrimWorldSize(1500.f);
 	TrimWorld->bShouldTrimWorld = true;
+
+
+    pWander = std::make_unique<Wander>();
+	pAgentToEvade = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass, FVector{ 200,200,90 }, FRotator::ZeroRotator);
+	pAgentToEvade->SetSteeringBehavior(pWander.get());
+	pAgentToEvade->SetDebugColor(FLinearColor::Blue);
+
+
 
 	pFlock = TUniquePtr<Flock>(
 		new Flock(
@@ -40,5 +49,14 @@ void ALevel_Flocking::Tick(float DeltaTime)
 	pFlock->RenderDebug();
 	if (bUseMouseTarget)
 		pFlock->SetTarget_Seek(MouseTarget);
+
+	FTargetData Target;
+	Target.Position = pAgentToEvade->GetPosition();
+	Target.Orientation = pAgentToEvade->GetRotation();
+	Target.LinearVelocity = pAgentToEvade->GetLinearVelocity();
+	Target.AngularVelocity = pAgentToEvade->GetAngularVelocity();
+
+	pFlock->SetTarget_Evade(Target);
+
 }
 

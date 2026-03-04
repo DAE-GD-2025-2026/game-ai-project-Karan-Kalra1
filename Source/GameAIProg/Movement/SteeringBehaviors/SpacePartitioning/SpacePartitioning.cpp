@@ -88,6 +88,7 @@ void CellSpace::RegisterNeighbors(ASteeringAgent& Agent, float QueryRadius)
 
 	FVector2D pos = Agent.GetPosition();
 	FRect queryRect;
+
 	queryRect.Min = pos - FVector2D(QueryRadius, QueryRadius);
 	queryRect.Max = pos + FVector2D(QueryRadius, QueryRadius);
 
@@ -106,6 +107,9 @@ void CellSpace::RegisterNeighbors(ASteeringAgent& Agent, float QueryRadius)
 
 			if (distSq < QueryRadius * QueryRadius)
 			{
+				if (NrOfNeighbors >= Neighbors.Num())
+					return;
+
 				Neighbors[NrOfNeighbors++] = other;
 			}
 		}
@@ -129,26 +133,47 @@ void CellSpace::RenderCells() const
 				pWorld,
 				FVector(points[i], 0),
 				FVector(points[(i + 1) % 4], 0),
-				FColor::Green,
+				FColor::Red,
 				false,
 				-1.f,
 				0,
-				1.f
+				2.f
 			);
+		 
 		}
+
+
+		// draw agent count in this cell
+		const FVector2D center2D = (cell.BoundingBox.Min + cell.BoundingBox.Max) * 0.5f;
+		const int count = static_cast<int>(cell.Agents.size());
+
+		DrawDebugString(
+			pWorld,
+			FVector(center2D, 80.f),
+			FString::Printf(TEXT("%d"), count),
+			nullptr,
+			FColor::White,
+			0.f,
+			false
+		);
 	}
 }
 
 int CellSpace::PositionToIndex(FVector2D const & Pos) const
 {
 	
-	int col = (Pos.X + SpaceWidth * 0.5f) / CellWidth;
-	int row = (Pos.Y + SpaceHeight * 0.5f) / CellHeight;
+	
+		const float fx = (Pos.X + SpaceWidth * 0.5f) / CellWidth;
+		const float fy = (Pos.Y + SpaceHeight * 0.5f) / CellHeight;
 
-	col = FMath::Clamp(col, 0, NrOfCols - 1);
-	row = FMath::Clamp(row, 0, NrOfRows - 1);
+		int col = FMath::FloorToInt(fx);
+		int row = FMath::FloorToInt(fy);
 
-	return row * NrOfCols + col;
+		col = FMath::Clamp(col, 0, NrOfCols - 1);
+		row = FMath::Clamp(row, 0, NrOfRows - 1);
+
+		return row * NrOfCols + col;
+	
 	
 }
 

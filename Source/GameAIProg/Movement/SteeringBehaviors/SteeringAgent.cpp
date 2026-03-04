@@ -4,6 +4,8 @@
 #include "AIController.h"
 
 
+
+
 // Sets default values
 ASteeringAgent::ASteeringAgent()
 {
@@ -21,6 +23,26 @@ void ASteeringAgent::BeginDestroy()
 {
 	Super::BeginDestroy();
 }
+
+
+
+void ASteeringAgent::SetDebugColor(const FLinearColor& Color)
+{
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	if (!MeshComp) return;
+
+	if (!DebugMID)
+	{
+		UMaterialInterface* BaseMat = MeshComp->GetMaterial(0);
+		if (!BaseMat) return;
+
+		DebugMID = UMaterialInstanceDynamic::Create(BaseMat, this);
+		MeshComp->SetMaterial(0, DebugMID);
+	}
+
+	DebugMID->SetVectorParameterValue(TEXT("Debug_Color"), Color);
+}
+
 
 // Called every frame
 void ASteeringAgent::Tick(float DeltaTime)

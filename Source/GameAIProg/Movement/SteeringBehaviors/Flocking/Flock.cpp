@@ -24,8 +24,8 @@ Flock::Flock(
 	//Initialize PartitionedSpace
 	pPartitionedSpace = std::make_unique<CellSpace>(
 		pWorld,
-		WorldSize,
-		WorldSize,
+		WorldSize * 2,
+		WorldSize * 2,
 		10,
 		10,
 		FlockSize
@@ -77,6 +77,7 @@ Flock::Flock(
 	if (pAgentToEvade)
 	{
 		pEvade = std::make_unique<Evade>(pAgentToEvade);
+		pEvade->SetEvadeDistance(200.f);
 
 		std::vector<ISteeringBehavior*> priorityBehaviors =
 		{
@@ -119,11 +120,18 @@ void Flock::Tick(float DeltaTime)
 
 		for (ASteeringAgent* agent : Agents)
 		{
+
 			if (bUseSpatialPartitioning)
 			{
 				pPartitionedSpace->RegisterNeighbors(*agent, NeighborhoodRadius);
 
 				NrOfNeighbors = pPartitionedSpace->GetNrOfNeighbors();
+
+				if (agent == Agents[0])
+				{
+					UE_LOG(LogTemp, Warning, TEXT("SP neighbors: %d"), NrOfNeighbors);
+				}
+
 				const TArray<ASteeringAgent*>& partitionNeighbors =
 					pPartitionedSpace->GetNeighbors();
 
@@ -140,8 +148,6 @@ void Flock::Tick(float DeltaTime)
 			agent->Tick(DeltaTime);
 		}
 
-		if (!bUseSpatialPartitioning)
-			DebugRenderPartitions = false;
 
 		//UE_LOG(LogTemp, Warning, TEXT("Neighbors: %d"), NrOfNeighbors);
 }
@@ -151,11 +157,40 @@ void Flock::RenderDebug()
  for (ASteeringAgent* agent : Agents)
 	{
 	 agent->SetDebugRenderingEnabled(DebugRenderSteering);
+	 agent->SetDebugColor(FLinearColor::White);
 	}
 
-if (DebugRenderNeighborhood)
-    RenderNeighborhood();
+ if (DebugRenderNeighborhood && Agents.Num() > 0)
+ {
+	 ASteeringAgent* ref = Agents[0];
 
+	 // Recompute neighbors for THIS specific agent
+	 if (bUseSpatialPartitioning)
+	 {
+		 pPartitionedSpace->RegisterNeighbors(*ref, NeighborhoodRadius);
+
+		 NrOfNeighbors = pPartitionedSpace->GetNrOfNeighbors();
+		 const auto& part = pPartitionedSpace->GetNeighbors();
+
+		 for (int i = 0; i < NrOfNeighbors; ++i)
+			 Neighbors[i] = part[i];
+	 }
+	 else
+	 {
+		 RegisterNeighbors_NoPartition(ref);
+	 }
+
+	 // Color reference agent green
+	 ref->SetDebugColor(FLinearColor::Green);
+
+	 // Color neighbors red
+	 for (int i = 0; i < NrOfNeighbors; ++i)
+	 {
+		 if (Neighbors[i])
+			 Neighbors[i]->SetDebugColor(FLinearColor::Red);
+	 }
+	 RenderNeighborhood();
+ }
 if (DebugRenderPartitions && bUseSpatialPartitioning)
 pPartitionedSpace->RenderCells();
 
@@ -280,17 +315,19 @@ void Flock::RegisterNeighbors_NoPartition(ASteeringAgent* const pAgent)
 
 	for (ASteeringAgent* other : Agents)
 	{
-		
 
 		if (other == pAgent)
 			continue;
 
-		float distance = FVector2D::Distance(
+		float distance = FVector2D::DistSquared(
 			pAgent->GetPosition(),
 			other->GetPosition());
 
-		if (distance < NeighborhoodRadius)
+		if (distance < NeighborhoodRadius * NeighborhoodRadius)
 		{
+			if (NrOfNeighbors >= Neighbors.Num())
+				return;
+
 			Neighbors[NrOfNeighbors] = other;
 			NrOfNeighbors++;
 		}
@@ -338,4 +375,15 @@ void Flock::SetTarget_Seek(FSteeringParams const& Target)
 		}
 	
 }
+
+void Flock::SetTarget_Evade(FSteeringParams const& Target)
+{
+
+	if (pEvade)
+	{
+		pEvade->SetTarget(Target);
+	}
+
+}
+
 
