@@ -381,6 +381,7 @@ void Flock::SetTarget_Evade(FSteeringParams const& Target)
 
 	if (pEvade)
 	{
+		pEvade->SetEvadeDistance(200.f);
 		pEvade->SetTarget(Target);
 	}
 
