@@ -52,10 +52,12 @@ class Arrive : public ISteeringBehavior
 {
 public:
 	Arrive(ASteeringAgent& Agent);
+	Arrive();
 	virtual ~Arrive() override = default;
 
 
 	virtual SteeringOutput CalculateSteering(float DeltaT, ASteeringAgent& Agent) override;
+	void SetTargetRadius(float radius);
 
 private : 
 	float SlowRadius{500.f};

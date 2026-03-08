@@ -83,6 +83,10 @@ SteeringOutput Flee::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 
 }
 
+Arrive::Arrive()
+{
+	
+}
 
 Arrive::Arrive(ASteeringAgent& Agent)
 {
@@ -91,6 +95,8 @@ Arrive::Arrive(ASteeringAgent& Agent)
 
 SteeringOutput Arrive::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 {
+	MaxSpeed = Agent.GetMaxLinearSpeed();
+
 	Agent.SetIsAutoOrienting(true);
 
 	SteeringOutput Steering{};
@@ -177,6 +183,11 @@ SteeringOutput Arrive::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 
 	return Steering;
 
+}
+
+void Arrive::SetTargetRadius(float radius)
+{
+	TargetRadius = radius;
 }
 
 
