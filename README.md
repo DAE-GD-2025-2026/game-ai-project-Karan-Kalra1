@@ -1,7 +1,8 @@
 
-# IMPORTANT
+### IMPORTANT
 
-Please recompile the code before running the application if you start directly from unreal engine otherwise it causes weird behavior
+- Please generate the visual studio project files after downloading
+- If Flock appears broken after starting the level please recompile the code and run again
 
 
 # Flocking & Spatial Partitioning
