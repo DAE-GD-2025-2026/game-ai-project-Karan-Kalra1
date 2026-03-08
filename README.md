@@ -1,4 +1,9 @@
 
+# IMPORTANT
+
+Please recompile the code before running the application if you start directly from unreal engine otherwise it causes weird behavior
+
+
 # Flocking & Spatial Partitioning
 
 This project implements a flocking simulation using classic steering behaviors and spatial partitioning for efficient neighbor detection
