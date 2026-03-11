@@ -56,6 +56,11 @@ private:
 	int PathStartNodeId{44};
 	int PathEndNodeId{88};
 	int SelectedHeuristic = 4;
+	bool bDrawGrid = true;
+	bool bDrawNodeNumbers = false;
+	bool bDrawConnections = false;
+	bool bDrawConnectionsCosts = false;
+	bool bDrawTerrain = true;
 	GameAI::HeuristicFunctions::Heuristic HeuristicFunction = GameAI::HeuristicFunctions::Chebyshev;
 	std::vector<GameAI::Node*> FoundPath{};
 

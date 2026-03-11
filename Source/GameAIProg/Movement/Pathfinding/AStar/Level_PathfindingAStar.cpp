@@ -20,40 +20,86 @@ ALevel_PathfindingAStar::ALevel_PathfindingAStar()
 // Called when the game starts or when spawned
 void ALevel_PathfindingAStar::BeginPlay()
 {
-	Super::BeginPlay();
 	
-	// Disable trimworld
-	TrimWorld->bShouldTrimWorld = false;
-	
-	// Make the view orthogonal for less perspective issues
-	if (PlayerController = Cast<APlayerController>(GetWorld()->GetFirstLocalPlayerFromController()->PlayerController); PlayerController)
-	{
-		if (AGameAISpectator* Player = Cast<AGameAISpectator>(PlayerController->GetPawnOrSpectator()); Player)
+		Super::BeginPlay();
+
+		UWorld* World = GetWorld();
+		if (!World)
 		{
-			Player->SetCameraProjection(ECameraProjectionMode::Orthographic);
+			UE_LOG(LogTemp, Error, TEXT("BeginPlay: World is null"));
+			return;
 		}
-	}
+
+		// Disable trimworld
+		if (TrimWorld)
+		{
+			TrimWorld->bShouldTrimWorld = false;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("TrimWorld is nullptr"));
+		}
+
+		// Make the view orthogonal for less perspective issues
+		if (ULocalPlayer* LocalPlayer = World->GetFirstLocalPlayerFromController())
+		{
+			PlayerController = Cast<APlayerController>(LocalPlayer->PlayerController);
+			if (PlayerController)
+			{
+				if (AGameAISpectator* Player = Cast<AGameAISpectator>(PlayerController->GetPawnOrSpectator()))
+				{
+					Player->SetCameraProjection(ECameraProjectionMode::Orthographic);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("GameAISpectator is nullptr"));
+				}
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("PlayerController is nullptr"));
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("LocalPlayer is nullptr"));
+		}
+
+		// Spawn the Agent
+		if (SteeringAgentClass)
+		{
+			Agent = World->SpawnActor<ASteeringAgent>(SteeringAgentClass, FVector(0, 0, 90), FRotator::ZeroRotator);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("SteeringAgentClass is nullptr"));
+		}
+
+		if (Agent)
+		{
+			Agent->SetDebugRenderingEnabled(false);
+			Agent->SetSteeringBehavior(&PathFollow);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Failed to spawn Agent"));
+		}
+
+		// Create graph & renderer
+		Renderer = new GraphRenderer{ World };
+
+		GraphRenderOptions RenderOptions{};
+		RenderOptions.bDrawConnectionWeights = false;
+		RenderOptions.bDrawConnections = false;
+		RenderOptions.bDrawNodeIds = false;
+		RenderOptions.bDrawNodes = false;
+		Renderer->SetRenderOptions(RenderOptions);
+
+		NodeFactory = new TerrainNodeFactory{};
+		TerrainGraph = new TerrainGridGraph{ NodeFactory, 10, 10, 200.0f, 1.0f, FVector2D{-1000.0f, -1000.0f}, false };
+
+		CalculatePath();
 	
-	// Spawn the Agent
-	Agent = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass, 
-	FVector{0,0,90}, FRotator::ZeroRotator);
-	Agent->SetDebugRenderingEnabled(false);
-	Agent->SetSteeringBehavior(&PathFollow);
-	
-	// Create graph & renderer
-	Renderer = new GraphRenderer{GetWorld()};
-	GraphRenderOptions RenderOptions{};
-	RenderOptions.bDrawConnectionWeights = false;
-	RenderOptions.bDrawConnections = false;
-	RenderOptions.bDrawNodeIds = false;
-	RenderOptions.bDrawNodes = false;
-	Renderer->SetRenderOptions(RenderOptions);
-	
-	NodeFactory = new TerrainNodeFactory{};
-	TerrainGraph = new TerrainGridGraph{NodeFactory, 10, 10, 200.0f, 1.0f, 
-		FVector2D{-1000.0f, -1000.0f}, false};
-	
-	CalculatePath();
 }
 
 void ALevel_PathfindingAStar::BeginDestroy()
@@ -90,10 +136,31 @@ void ALevel_PathfindingAStar::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	
 	UpdateImGui();
+
+
+	if (!Renderer || !TerrainGraph)
+	{
+		return;
+	}
 	
+	GraphRenderOptions RenderOptions{};
+	RenderOptions.bDrawNodes = bDrawGrid;
+	RenderOptions.bDrawNodeIds = bDrawNodeNumbers;
+	RenderOptions.bDrawConnections = bDrawConnections;
+	RenderOptions.bDrawConnectionWeights = bDrawConnectionsCosts;
+	Renderer->SetRenderOptions(RenderOptions);
+
 	Renderer->RenderGraph(*TerrainGraph);
-	TerrainGraph->DebugDrawCells(GetWorld());
-	TerrainGraph->DrawTerrain(GetWorld());
+
+	if (bDrawGrid)
+	{
+		TerrainGraph->DebugDrawCells(GetWorld());
+	}
+
+	if (bDrawTerrain)
+	{
+		TerrainGraph->DrawTerrain(GetWorld());
+	}
 	// TODO implement conditional debug draws
 }
 
@@ -106,8 +173,8 @@ void ALevel_PathfindingAStar::CalculatePath()
 		&& PathStartNodeId != PathEndNodeId)
 	{
 		//Select (uncomment) BFS Pathfinding or A* Pathfinding
-		BFS pathfinder = BFS(TerrainGraph);
-		// AStar pathfinder = AStar(TerrainGraph, HeuristicFunction);
+		//BFS pathfinder = BFS(TerrainGraph);
+		 AStar pathfinder = AStar(TerrainGraph, HeuristicFunction);
 		TerrainNode* const startNode = TerrainGraph->GetNodeAs<TerrainNode>(PathStartNodeId);
 		TerrainNode* const endNode = TerrainGraph->GetNodeAs<TerrainNode>(PathEndNodeId);
 
@@ -143,11 +210,14 @@ void ALevel_PathfindingAStar::UpdateAgentPath(std::vector<Node*> const& Path)
 	pathPositions.reserve(Path.size());
 	for (Node* const pNode : Path)
 	{
-		pathPositions.emplace_back(pNode->GetPosition());
+		if (pNode)
+		{
+			pathPositions.emplace_back(pNode->GetPosition());
+		}
 	}
 
 	PathFollow.SetPath(pathPositions);
-	if (pathPositions.size() > 0)
+	if (!pathPositions.empty() && Agent)
 	{
 		Agent->SetPosition(pathPositions[0]);
 	}
@@ -187,11 +257,13 @@ void ALevel_PathfindingAStar::UpdateImGui()
 		ImGui::Spacing();
 		
 		// TODO conditional debug draws
-		// ImGui::Checkbox("Grid", &bDrawGrid);
-		// ImGui::Checkbox("NodeNumbers", &bDrawNodeNumbers);
-		// ImGui::Checkbox("Connections", &bDrawConnections);
-		// ImGui::Checkbox("Connections Costs", &bDrawConnectionsCosts);
-		if (ImGui::Combo("", &SelectedHeuristic, "Manhattan\0Euclidean\0SqEuclidean\0Octile\0Chebyshev", 4))
+		 ImGui::Checkbox("Grid", &bDrawGrid);
+		 ImGui::Checkbox("NodeNumbers", &bDrawNodeNumbers);
+		 ImGui::Checkbox("Connections", &bDrawConnections);
+		 ImGui::Checkbox("Connections Costs", &bDrawConnectionsCosts);
+		 ImGui::Checkbox("Terrain", &bDrawTerrain);
+
+		if (ImGui::Combo("", &SelectedHeuristic, "Manhattan\0Euclidean\0SqEuclidean\0Octile\0Chebyshev\0", 5))
 		{
 			switch (SelectedHeuristic)
 			{
@@ -213,6 +285,8 @@ void ALevel_PathfindingAStar::UpdateImGui()
 				break;
 			}
 		}
+		//CalculatePath();
+
 		ImGui::Spacing();
 
 		//End
