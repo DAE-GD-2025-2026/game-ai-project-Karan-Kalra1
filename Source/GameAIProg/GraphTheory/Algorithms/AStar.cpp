@@ -129,6 +129,8 @@ std::vector<Node*> AStar::FindPath(Node* const pStartNode, Node* const pGoalNode
 		return path;
 	}
 
+	//BackTracking
+
 	while (currentRecord.pNode != pStartNode)
 	{
 		path.push_back(currentRecord.pNode);
