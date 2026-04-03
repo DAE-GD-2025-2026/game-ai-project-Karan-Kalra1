@@ -103,10 +103,10 @@ public:
 
 			// Check if going inwards (CCW) or not
 			// right check inward = CCW
-			if (FVector2D::CrossProduct(rightLeg, newRightLeg) > 0.f)
+			if (FVector2D::CrossProduct(rightLeg, newRightLeg) >= 0.f)
 			{
 				// Check if we cross over the leftLeg
-				if (FVector2D::CrossProduct(leftLeg, newRightLeg) >= 0.f)
+				if (FVector2D::CrossProduct(leftLeg, newRightLeg) <= 0.f)
 				{
 					// Not crossing over leftLeg -> update rightLeg
 					rightLeg = newRightLeg;
@@ -145,10 +145,10 @@ public:
 			FVector2D newLeftLeg = portal.P2 - apexPoint;
 
 			// Same logic as right, but inward is CW instead of CCW
-			if (FVector2D::CrossProduct(leftLeg, newLeftLeg) < 0.f)
+			if (FVector2D::CrossProduct(leftLeg, newLeftLeg) <= 0.f)
 			{
 				// Check if we cross over the rightLeg
-				if (FVector2D::CrossProduct(rightLeg, newLeftLeg) <= 0.f)
+				if (FVector2D::CrossProduct(rightLeg, newLeftLeg) >= 0.f)
 				{
 					// Not crossing over rightLeg -> update leftLeg
 					leftLeg = newLeftLeg;
