@@ -21,7 +21,6 @@ namespace GameAI
     public:
         explicit Node(FVector2D const& Position);
         virtual ~Node() = default;
-        
         void SetId(int id);
         int GetId() const;
 
@@ -30,6 +29,8 @@ namespace GameAI
         
         bool operator==(const Node& Other) const;
         bool operator==(const Node* OtherPtr) const;
+
+        int Color = -1;
 
     private:
         FVector2D Position;

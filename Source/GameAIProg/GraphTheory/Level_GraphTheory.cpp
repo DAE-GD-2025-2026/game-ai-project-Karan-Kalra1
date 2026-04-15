@@ -5,6 +5,7 @@
 
 #include "Algorithms/EulerianPath.h"
 #include "Shared/GameAISpectator.h"
+#include <set>
 
 using namespace GameAI;
 
@@ -71,6 +72,61 @@ void ALevel_GraphTheory::BeginDestroy()
 	Super::BeginDestroy();
 }
 
+void ColorGraph(GameAI::Graph& graph)
+{
+	auto nodes = graph.GetActiveNodes();
+
+	// Optional: sort by degree
+	std::sort(nodes.begin(), nodes.end(),
+		[&](GameAI::Node* a, GameAI::Node* b)
+		{
+			return graph.FindConnectionsFrom(a->GetId()).size() >
+				graph.FindConnectionsFrom(b->GetId()).size();
+		});
+
+	for (GameAI::Node* node : nodes)
+	{
+		std::set<int> usedColors;
+
+		auto connections = graph.FindConnectionsFrom(node->GetId());
+
+		for (auto* conn : connections)
+		{
+			int neighborId = conn->GetToId();
+			auto& neighborPtr = graph.GetNode(neighborId);
+
+			if (neighborPtr && neighborPtr->Color != -1)
+			{
+				usedColors.insert(neighborPtr->Color);
+			}
+		}
+
+		int color = 0;
+		while (usedColors.contains(color))
+		{
+			color++;
+		}
+
+		node->Color = color;
+	}
+}
+
+
+FColor GetDebugColor(int color)
+{
+	static std::vector<FColor> palette =
+	{
+		FColor::Red,
+		FColor::Green,
+		FColor::Blue,
+		FColor::Yellow,
+		FColor::Cyan,
+		FColor::Magenta
+	};
+
+	return palette[color % palette.size()];
+}
+
 void ALevel_GraphTheory::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -113,6 +169,31 @@ void ALevel_GraphTheory::Tick(float DeltaTime)
 #pragma endregion UI
 
 	Renderer.RenderGraph(Graph);
+	ColorGraph(Graph);
+
+	for (GameAI::Node* node : Graph.GetActiveNodes())
+	{
+		FColor color = GetDebugColor(node->Color);
+
+		DrawDebugSphere(
+			GetWorld(),
+			FVector(node->GetPosition(), 0.f),
+			32.f,
+			8,
+			color,
+			false,
+			-1.f
+		);
+	}
+
+	int maxColor = 0;
+	for (auto* node : Graph.GetActiveNodes())
+	{
+		maxColor = FMath::Max(maxColor, node->Color);
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Colors used: %d"), maxColor + 1);
+
 
 	static int PreviousNodeCount = -1;
 	static int PreviousConnectionCount = -1;
