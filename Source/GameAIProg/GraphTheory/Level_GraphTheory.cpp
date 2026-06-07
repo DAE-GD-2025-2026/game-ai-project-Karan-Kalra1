@@ -76,7 +76,7 @@ void ColorGraph(GameAI::Graph& graph)
 {
 	auto nodes = graph.GetActiveNodes();
 
-	// Optional: sort by degree
+	//optionally sort by degree
 	std::sort(nodes.begin(), nodes.end(),
 		[&](GameAI::Node* a, GameAI::Node* b)
 		{

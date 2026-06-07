@@ -1,4 +1,15 @@
 
+### Extra Assignment
+
+# Graph Coloring
+
+- Color a graph using as few colors as possible while making sure the
+  connected nodes never have the same color
+
+- Week 4
+
+
+
 ### IMPORTANT
 
 - Please generate the visual studio project files after downloading
